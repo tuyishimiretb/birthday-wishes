@@ -107,10 +107,12 @@ const App = (() => {
     }
     if (data) {
       const settingKeys = ['bw_birthday_name', 'bw_birthday_date', 'bw_card_emoji', 'bw_card_message',
-        'bw_card_style', 'bw_theme', 'bw_admin_email', 'bw_link_expiry', 'bw_music_url'];
+        'bw_card_style', 'bw_theme', 'bw_admin_email', 'bw_link_expiry', 'bw_music_url', 'bw_birthday_photo'];
       settingKeys.forEach(key => {
-        if (data[key]) {
+        if (data[key] !== undefined && data[key] !== null) {
           try { localStorage.setItem(key, data[key]); } catch {}
+        } else {
+          try { localStorage.removeItem(key); } catch {}
         }
       });
     }

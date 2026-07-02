@@ -663,6 +663,7 @@ const Dashboard = (() => {
       if (!dataUrl) return;
       try {
         localStorage.setItem('bw_birthday_photo', dataUrl);
+        syncSettingToFirestore('bw_birthday_photo', dataUrl);
         showToast('Birthday photo saved!');
         saveBtn.style.display = 'none';
         removeBtn.style.display = 'inline-flex';
@@ -672,6 +673,7 @@ const Dashboard = (() => {
     removeBtn?.addEventListener('click', () => {
       if (!Auth.isLoggedIn()) return;
       try { localStorage.removeItem('bw_birthday_photo'); } catch {}
+      syncSettingToFirestore('bw_birthday_photo', '');
       preview.src = '';
       preview.style.display = 'none';
       empty.style.display = 'block';
