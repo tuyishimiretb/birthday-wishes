@@ -13,6 +13,9 @@ const Auth = (() => {
       currentUser = user;
       const ev = new CustomEvent('authChange', { detail: { user } });
       document.dispatchEvent(ev);
+    }, () => {
+      fbAuth._isInvalid = true;
+      console.warn('Auth: Firebase Auth unavailable, using local fallback');
     });
   }
 
