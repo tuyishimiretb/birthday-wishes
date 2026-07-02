@@ -34,7 +34,7 @@ const Auth = (() => {
       return cred.user;
     } catch (err) {
       // If Firebase Auth fails due to invalid config, fall back to local
-      if (err.code === 'auth/api-key-not-valid' || err.code === 'auth/invalid-api-key') {
+      if (err.code === 'auth/api-key-not-valid' || err.code === 'auth/invalid-api-key' || err.code === 'auth/configuration-not-found') {
         fbAuth._isInvalid = true;
         return login(email, password);
       }
