@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Birthday Wishes</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" defer></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+  <!-- Login Overlay -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-modal">
+      <div class="login-icon"><i class="fas fa-lock"></i></div>
+      <h2>Admin Access</h2>
+      <p>Enter password to manage the birthday page</p>
+      <form id="loginForm" autocomplete="off">
+        <div class="login-input-group">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="loginEmail" placeholder="Admin email" required>
+        </div>
+        <div class="login-input-group">
+          <i class="fas fa-key"></i>
+          <input type="password" id="loginPassword" placeholder="Password" required>
+        </div>
+        <button type="submit" class="btn-primary login-btn">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+        <p class="login-error" id="loginError"></p>
+        <p class="login-hint">Use Firebase Authentication email/password</p>
+      </form>
+      <button id="logoutBtn" class="btn-secondary" style="display:none">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Dashboard Content (hidden until login) -->
+  <div id="dashboardContent" class="dashboard-content" style="display:none">
+    <!-- Dashboard Nav -->
+    <nav class="dashboard-nav">
+      <div class="dashboard-nav-brand">🎉 Admin Panel</div>
+      <div class="dashboard-nav-links">
+        <button class="dash-tab active" data-tab="overview"><i class="fas fa-chart-pie"></i> Overview</button>
+        <button class="dash-tab" data-tab="comments"><i class="fas fa-comments"></i> Comments</button>
+        <button class="dash-tab" data-tab="photos"><i class="fas fa-images"></i> Photos</button>
+        <button class="dash-tab" data-tab="reactions"><i class="fas fa-heart"></i> Reactions</button>
+        <button class="dash-tab" data-tab="settings"><i class="fas fa-cog"></i> Settings</button>
+        <button class="dash-tab" data-tab="notifications"><i class="fas fa-bell"></i> Notifications</button>
+      </div>
+      <div class="dashboard-nav-user">
+        <span id="dashUserEmail"></span>
+        <button id="dashLogout" class="btn-secondary-sm"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </nav>
+
+    <!-- Tab: Overview -->
+    <div class="dash-tab-content active" id="tabOverview">
+      <h2>Dashboard Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-comment"></i></div>
+          <div class="stat-info">
+            <span class="stat-number" id="statComments">0</span>
+            <span class="stat-label">Total Comments</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-info">
+            <span class="stat-number" id="statApproved">0</span>
+            <span class="stat-label">Approved</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+          <div class="stat-info">
+            <span class="stat-number" id="statPending">0</span>
+            <span class="stat-label">Pending</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-image"></i></div>
+          <div class="stat-info">
+            <span class="stat-number" id="statPhotos">0</span>
+            <span class="stat-label">Photos</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-heart"></i></div>
+          <div class="stat-info">
+            <span class="stat-number" id="statReactions">0</span>
+            <span class="stat-label">Total Reactions</span>
+          </div>
+        </div>
+      </div>
+      <div class="recent-activity">
+        <h3>Recent Activity</h3>
+        <div id="recentActivity"><p class="text-muted">Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- Tab: Comments Management -->
+    <div class="dash-tab-content" id="tabComments">
+      <div class="dash-toolbar">
+        <h2>Comment Management</h2>
+        <div class="dash-toolbar-actions">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="commentSearch" placeholder="Search comments...">
+          </div>
+          <button id="exportCommentsBtn" class="btn-secondary"><i class="fas fa-download"></i> Export CSV</button>
+          <button id="refreshCommentsBtn" class="btn-secondary"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+      </div>
+      <div class="dash-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="approved">Approved</button>
+      </div>
+      <div class="dash-table-container">
+        <table class="dash-table" id="commentsTable">
+          <thead>
+<tr>
+  <th>Name</th>
+  <th>Comment</th>
+  <th>Reaction</th>
+  <th>Date</th>
+  <th>Status</th>
+  <th>Reply</th>
+  <th>Actions</th>
+</tr>
+          </thead>
+          <tbody id="commentsBody">
+            <tr><td colspan="7" class="text-muted">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dash-pagination" id="commentPagination"></div>
+    </div>
+
+    <!-- Tab: Photos Management -->
+    <div class="dash-tab-content" id="tabPhotos">
+      <div class="dash-toolbar">
+        <h2>Photo Management</h2>
+        <div class="dash-toolbar-actions">
+          <button id="refreshPhotosBtn" class="btn-secondary"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+      </div>
+      <div class="photos-grid" id="photosGrid">
+        <p class="text-muted">Loading photos...</p>
+      </div>
+    </div>
+
+    <!-- Tab: Reactions -->
+    <div class="dash-tab-content" id="tabReactions">
+      <h2>Reaction Analytics</h2>
+      <div class="reactions-chart" id="reactionsChart">
+        <div class="reaction-bar" data-reaction="heart">
+          <span class="bar-label">❤️ Hearts</span>
+          <div class="bar-track"><div class="bar-fill" id="barHeart" style="width:0%"></div></div>
+          <span class="bar-count" id="countHeart">0</span>
+        </div>
+        <div class="reaction-bar" data-reaction="cake">
+          <span class="bar-label">🎂 Cakes</span>
+          <div class="bar-track"><div class="bar-fill" id="barCake" style="width:0%"></div></div>
+          <span class="bar-count" id="countCake">0</span>
+        </div>
+        <div class="reaction-bar" data-reaction="balloon">
+          <span class="bar-label">🎈 Balloons</span>
+          <div class="bar-track"><div class="bar-fill" id="barBalloon" style="width:0%"></div></div>
+          <span class="bar-count" id="countBalloon">0</span>
+        </div>
+        <div class="reaction-bar" data-reaction="confetti">
+          <span class="bar-label">🎊 Confetti</span>
+          <div class="bar-track"><div class="bar-fill" id="barConfetti" style="width:0%"></div></div>
+          <span class="bar-count" id="countConfetti">0</span>
+        </div>
+        <div class="reaction-bar" data-reaction="star">
+          <span class="bar-label">⭐ Stars</span>
+          <div class="bar-track"><div class="bar-fill" id="barStar" style="width:0%"></div></div>
+          <span class="bar-count" id="countStar">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Settings -->
+    <div class="dash-tab-content" id="tabSettings">
+      <h2>Page Settings</h2>
+      <div class="settings-form">
+        <div class="setting-group">
+          <label>Birthday Person's Name</label>
+          <input type="text" id="settingName" placeholder="Enter name">
+          <button id="saveNameBtn" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="setting-group">
+          <label>Birthday Date</label>
+          <input type="date" id="settingDate">
+          <button id="saveDateBtn" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="setting-group">
+          <label>Link Expiry Date</label>
+          <p class="text-muted" style="margin-bottom:6px;font-size:0.85rem;">After this date, the shared link will show "expired" to all visitors.</p>
+          <input type="date" id="settingLinkExpiry">
+          <button id="saveLinkExpiryBtn" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="setting-group">
+          <label>Birthday Person's Photo</label>
+          <div class="dash-photo-upload" id="dashPhotoArea" style="cursor:pointer;">
+            <input type="file" id="dashPhotoInput" accept="image/*" hidden>
+            <div class="dash-photo-placeholder" id="dashPhotoPlaceholder">
+              <img id="dashPhotoPreview" src="" alt="" style="max-width:200px;max-height:200px;border-radius:12px;display:none;margin:0 auto;">
+              <div id="dashPhotoEmpty" style="padding:20px;border:2px dashed var(--glass-border);border-radius:12px;text-align:center;">
+                <i class="fas fa-cloud-upload-alt" style="font-size:2rem;color:var(--text-dim);display:block;margin-bottom:8px;"></i>
+                <span style="color:var(--text-muted);">Click to upload photo</span>
+              </div>
+            </div>
+          </div>
+          <button id="dashSavePhotoBtn" class="btn-primary" style="display:none;margin-top:8px;"><i class="fas fa-save"></i> Save Photo</button>
+          <button id="dashRemovePhotoBtn" class="btn-secondary" style="display:none;margin-top:8px;margin-left:8px;"><i class="fas fa-trash"></i> Remove</button>
+        </div>
+        <div class="setting-group">
+          <label>Card Emoji</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="emojiPicker">
+            <span class="emoji-opt" data-emoji="🎂" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🎂</span>
+            <span class="emoji-opt" data-emoji="🎉" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🎉</span>
+            <span class="emoji-opt" data-emoji="🎈" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🎈</span>
+            <span class="emoji-opt" data-emoji="💝" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">💝</span>
+            <span class="emoji-opt" data-emoji="🌟" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🌟</span>
+            <span class="emoji-opt" data-emoji="🎊" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🎊</span>
+            <span class="emoji-opt" data-emoji="🥳" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🥳</span>
+            <span class="emoji-opt" data-emoji="🎁" style="font-size:2rem;cursor:pointer;padding:4px 8px;border-radius:8px;transition:.2s;">🎁</span>
+          </div>
+          <input type="text" id="settingCardEmoji" placeholder="Or type any emoji" maxlength="10" style="margin-top:8px;">
+          <button id="saveEmojiBtn" class="btn-primary" style="margin-top:8px;"><i class="fas fa-save"></i> Save Emoji</button>
+        </div>
+        <div class="setting-group">
+          <label>Card Message</label>
+          <textarea id="settingCardMessage" rows="3" placeholder="Wishing you the happiest birthday..."></textarea>
+          <button id="saveCardMessageBtn" class="btn-primary"><i class="fas fa-save"></i> Save Message</button>
+        </div>
+        <div class="setting-group">
+          <label>Default Theme</label>
+          <select id="settingTheme">
+            <option value="pastel">Pastel</option>
+            <option value="neon">Neon</option>
+            <option value="vintage">Vintage</option>
+            <option value="ocean">Ocean</option>
+            <option value="space">Space</option>
+            <option value="golden">Golden</option>
+          </select>
+          <button id="saveThemeBtn" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="setting-group">
+          <label>Card Style</label>
+          <select id="settingCardStyle">
+            <option value="classic">Classic</option>
+            <option value="balloon">Balloon</option>
+            <option value="confetti">Confetti</option>
+            <option value="elegant">Elegant</option>
+            <option value="fun">Fun</option>
+          </select>
+          <button id="saveCardStyleBtn" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="setting-group">
+          <label>Admin Email (for login)</label>
+          <input type="email" id="settingAdminEmail" placeholder="admin@example.com">
+          <button id="saveAdminEmailBtn" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="setting-group" style="border-top:1px solid var(--glass-border);padding-top:20px;">
+          <label>Celebration Controls</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="triggerConfettiBtn" class="btn-primary"><i class="fas fa-sparkles"></i> Trigger Confetti</button>
+            <button id="triggerBalloonsBtn" class="btn-secondary"><i class="fas fa-balloon"></i> Launch Balloons</button>
+          </div>
+        </div>
+        <div class="setting-group" style="border-top:1px solid var(--glass-border);padding-top:20px;">
+          <label>Danger Zone</label>
+          <p class="text-muted" style="margin-bottom:8px;">Clear all comments, reactions, and photos from local storage.</p>
+          <button id="resetAllBtn" class="btn-secondary" style="color:#ef4444;border-color:#ef4444;"><i class="fas fa-trash-alt"></i> Reset All Local Data</button>
+        </div>
+        <div class="setting-group">
+          <label>Firebase Config</label>
+          <p class="text-muted">Configure in <code>js/firebase-config.js</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Tab: Notifications -->
+    <div class="dash-tab-content" id="tabNotifications">
+      <div class="dash-toolbar">
+        <h2>Birthday Notifications <span id="notifBadge" class="notif-badge" style="display:none;"></span></h2>
+        <div class="dash-toolbar-actions">
+          <button id="refreshNotifBtn" class="btn-secondary"><i class="fas fa-sync"></i> Refresh</button>
+          <button id="clearReadNotifBtn" class="btn-secondary"><i class="fas fa-check-double"></i> Clear Read</button>
+        </div>
+      </div>
+      <div class="dash-table-container">
+        <table class="dash-table" id="notifTable">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Birthday Person</th>
+              <th>Date</th>
+              <th>Submitted By</th>
+              <th>Message</th>
+              <th>Submitted</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="notifBody">
+            <tr><td colspan="7" class="text-muted">No notifications yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  <!-- Reply Modal -->
+  <div id="replyModal" class="reply-modal" style="display:none;">
+    <div class="reply-modal-content">
+      <div class="reply-modal-header">
+        <h3><i class="fas fa-reply"></i> Reply to Comment</h3>
+        <button id="replyModalClose" class="reply-modal-close">&times;</button>
+      </div>
+      <div class="reply-modal-body">
+        <p id="replyModalPreview" class="reply-preview"></p>
+        <textarea id="replyModalInput" rows="3" placeholder="Type your reply here..." maxlength="500"></textarea>
+      </div>
+      <div class="reply-modal-footer">
+        <button id="replyModalCancel" class="btn-secondary">Cancel</button>
+        <button id="replyModalSend" class="btn-primary"><i class="fas fa-paper-plane"></i> Send Reply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"><span id="toastMessage"></span></div>
+
+  <script src="js/countdown.js" defer></script>
+  <script src="js/themes.js" defer></script>
+  <script src="js/utils.js" defer></script>
+  <script src="js/firebase-config.js" defer></script>
+  <script src="js/animations.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/dashboard.js" defer></script>
+  <script src="js/dashboard-notify.js" defer></script>
+</body>
+</html>

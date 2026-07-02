@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birthday Wishes</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" defer></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Canvas for confetti/balloons -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="loader-cake">🎂</div>
+      <div class="loader-bar"><span></span></div>
+      <p>Loading birthday magic...</p>
+    </div>
+  </div>
+
+  <!-- Music Controls -->
+  <div id="musicControls" class="music-controls">
+    <button id="musicToggle" class="music-btn" aria-label="Toggle music">
+      <i class="fas fa-music"></i>
+    </button>
+    <div class="music-tooltip">Click to play music</div>
+  </div>
+
+  <!-- Theme is set by admin from the dashboard only -->
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">🎉 BirthdayWishes</div>
+      <div class="nav-links" id="navLinks">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#countdown" class="nav-link">Countdown</a>
+        <a href="#card" class="nav-link">Card</a>
+        <a href="#messages" class="nav-link">Wishes</a>
+        <a href="#comments" class="nav-link">Comments</a>
+        <a href="#share" class="nav-link">Share</a>
+        <a href="dashboard.html" class="nav-link dashboard-link"><i class="fas fa-cog"></i></a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ====== HERO SECTION ====== -->
+  <section id="hero" class="hero-section">
+    <div class="hero-bg-particles" id="heroParticles"></div>
+    <div class="hero-content">
+      <div class="hero-badge">🎂 Birthday Celebration</div>
+      <h1 class="hero-title">
+        <span class="title-line">Happy Birthday</span>
+        <span class="title-name" id="heroNameDisplay">🎉</span>
+      </h1>
+      <p class="hero-subtitle">Celebrate life's most beautiful moments with love, laughter, and joy</p>
+      <div class="hero-actions">
+        <button class="btn-secondary" id="scrollCelebrate">
+          <i class="fas fa-gift"></i> Explore
+        </button>
+      </div>
+      <div class="hero-scroll-indicator">
+        <span>Scroll for magic</span>
+        <i class="fas fa-chevron-down bounce"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== COUNTDOWN SECTION ====== -->
+  <section id="countdown" class="countdown-section">
+    <div class="section-header">
+      <span class="section-icon">⏰</span>
+      <h2>Countdown to Birthday</h2>
+      <p>Time until the big celebration</p>
+    </div>
+    <div class="countdown-grid" id="countdownGrid">
+      <div class="countdown-item">
+        <span class="countdown-value" id="countDays">00</span>
+        <span class="countdown-label">Days</span>
+      </div>
+      <div class="countdown-item">
+        <span class="countdown-value" id="countHours">00</span>
+        <span class="countdown-label">Hours</span>
+      </div>
+      <div class="countdown-item">
+        <span class="countdown-value" id="countMinutes">00</span>
+        <span class="countdown-label">Minutes</span>
+      </div>
+      <div class="countdown-item">
+        <span class="countdown-value" id="countSeconds">00</span>
+        <span class="countdown-label">Seconds</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== CARD / THEME SECTION ====== -->
+  <section id="card" class="card-section">
+    <div class="section-header">
+      <span class="section-icon">💌</span>
+      <h2>Birthday Card</h2>
+      <p>Choose a style and send your love</p>
+    </div>
+    <div class="card-customizer">
+      <div class="card-style-selector">
+        <h3>Card Style</h3>
+        <div class="card-styles" id="cardStyles">
+          <div class="card-style-btn active" data-style="classic" title="Classic">
+            <i class="fas fa-birthday-cake"></i>
+            <span>Classic</span>
+          </div>
+          <div class="card-style-btn" data-style="balloon" title="Balloon">
+            <i class="fas fa-balloon"></i>
+            <span>Balloon</span>
+          </div>
+          <div class="card-style-btn" data-style="confetti" title="Confetti">
+            <i class="fas fa-confetti"></i>
+            <span>Confetti</span>
+          </div>
+          <div class="card-style-btn" data-style="elegant" title="Elegant">
+            <i class="fas fa-crown"></i>
+            <span>Elegant</span>
+          </div>
+          <div class="card-style-btn" data-style="fun" title="Fun">
+            <i class="fas fa-laugh-beam"></i>
+            <span>Fun</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-preview" id="cardPreview">
+        <div class="card-inner">
+          <div class="card-emoji" id="cardEmoji">🎂</div>
+          <h3 class="card-title" id="cardTitle">Happy Birthday!</h3>
+          <p class="card-name" id="cardNameDisplay">[Name]</p>
+          <p class="card-message" id="cardMessage">Wishing you the happiest birthday filled with love and joy!</p>
+          <div class="card-photo" id="cardPhotoContainer">
+            <img id="cardPhoto" src="" alt="Birthday person" style="display:none">
+          </div>
+          <div class="card-footer">
+            <span class="card-date" id="cardDate"></span>
+            <span class="card-hearts">
+              <i class="fas fa-heart"></i> <i class="fas fa-heart"></i> <i class="fas fa-heart"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== MESSAGES SECTION ====== -->
+  <section id="messages" class="messages-section">
+    <div class="section-header">
+      <span class="section-icon">💝</span>
+      <h2>Birthday Wishes Generator</h2>
+      <p>Pick a heartfelt message to share</p>
+    </div>
+    <div class="messages-container">
+      <div class="messages-categories" id="msgCategories">
+        <button class="msg-cat active" data-cat="all">All</button>
+        <button class="msg-cat" data-cat="heartfelt">Heartfelt</button>
+        <button class="msg-cat" data-cat="funny">Funny</button>
+        <button class="msg-cat" data-cat="short">Short</button>
+        <button class="msg-cat" data-cat="poetic">Poetic</button>
+      </div>
+      <div class="messages-grid" id="messagesGrid"></div>
+    </div>
+  </section>
+
+  <!-- ====== COMMENTS SECTION ====== -->
+  <section id="comments" class="comments-section">
+    <div class="section-header">
+      <span class="section-icon">💬</span>
+      <h2>Leave a Wish</h2>
+      <p>Share your love with a comment</p>
+    </div>
+    <div class="comments-container">
+      <div class="comment-form" id="commentForm">
+        <div class="comment-form-header">
+          <img id="commentAvatar" src="https://ui-avatars.com/api/?name=Guest&background=random&size=40" alt="Avatar">
+          <input type="text" id="commenterName" placeholder="Your name..." maxlength="50">
+        </div>
+        <textarea id="commentText" placeholder="Write your birthday wish here..." maxlength="500" rows="3"></textarea>
+        <div class="comment-form-actions">
+          <div class="comment-reactions-preview" id="commentReactionsPreview">
+            <span class="reaction-option" data-reaction="heart">❤️</span>
+            <span class="reaction-option" data-reaction="cake">🎂</span>
+            <span class="reaction-option" data-reaction="balloon">🎈</span>
+            <span class="reaction-option" data-reaction="confetti">🎊</span>
+            <span class="reaction-option" data-reaction="star">⭐</span>
+          </div>
+          <button id="commentSubmit" class="btn-primary">
+            <i class="fas fa-paper-plane"></i> Send Wish
+          </button>
+        </div>
+      </div>
+      <div class="comments-feed" id="commentsFeed">
+        <div class="comments-loading"><i class="fas fa-spinner fa-spin"></i> Loading wishes...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== REACTIONS / LIKES ====== -->
+  <section id="reactions" class="reactions-section">
+    <div class="section-header">
+      <span class="section-icon">🎯</span>
+      <h2>Show Some Love</h2>
+      <p>React to this birthday celebration</p>
+    </div>
+    <div class="reactions-container" id="reactionsContainer">
+      <div class="reaction-btn" data-reaction="heart">
+        <div class="reaction-icon">❤️</div>
+        <span class="reaction-count" id="reactHeart">0</span>
+        <span class="reaction-label">Hearts</span>
+      </div>
+      <div class="reaction-btn" data-reaction="cake">
+        <div class="reaction-icon">🎂</div>
+        <span class="reaction-count" id="reactCake">0</span>
+        <span class="reaction-label">Cakes</span>
+      </div>
+      <div class="reaction-btn" data-reaction="balloon">
+        <div class="reaction-icon">🎈</div>
+        <span class="reaction-count" id="reactBalloon">0</span>
+        <span class="reaction-label">Balloons</span>
+      </div>
+      <div class="reaction-btn" data-reaction="confetti">
+        <div class="reaction-icon">🎊</div>
+        <span class="reaction-count" id="reactConfetti">0</span>
+        <span class="reaction-label">Confetti</span>
+      </div>
+      <div class="reaction-btn" data-reaction="star">
+        <div class="reaction-icon">⭐</div>
+        <span class="reaction-count" id="reactStar">0</span>
+        <span class="reaction-label">Stars</span>
+      </div>
+    </div>
+    <div class="reaction-feedback" id="reactionFeedback"></div>
+  </section>
+
+  <!-- ====== SHARE SECTION ====== -->
+  <section id="share" class="share-section">
+    <div class="section-header">
+      <span class="section-icon">🔗</span>
+      <h2>Share This Celebration</h2>
+      <p>Spread the joy with everyone</p>
+    </div>
+    <div class="share-container">
+      <div class="share-url-box">
+        <input type="text" id="shareUrl" readonly>
+        <button id="copyUrlBtn" class="btn-primary"><i class="fas fa-copy"></i> Copy</button>
+      </div>
+      <div class="share-buttons">
+        <a href="#" id="shareWhatsApp" class="share-btn whatsapp" target="_blank">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </a>
+        <a href="https://www.instagram.com/" id="shareInstagram" class="share-btn instagram" target="_blank">
+          <i class="fab fa-instagram"></i> Instagram
+        </a>
+        <button id="shareNativeBtn" class="share-btn native">
+          <i class="fas fa-share-alt"></i> Share
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== NOTIFY ADMIN SECTION ====== -->
+  <section id="notify" class="notify-section">
+    <div class="section-header">
+      <span class="section-icon">📢</span>
+      <h2>Notify Admin About a Birthday</h2>
+      <p>Let the admin know someone special has a birthday coming soon</p>
+    </div>
+    <div class="notify-container">
+      <form id="notifyForm" class="notify-form">
+        <div class="notify-field">
+          <label>Birthday Person's Name <span class="required">*</span></label>
+          <input type="text" id="notifyName" placeholder="e.g. John Doe" required>
+        </div>
+        <div class="notify-field">
+          <label>Birthday Date <span class="required">*</span></label>
+          <input type="date" id="notifyDate" required>
+        </div>
+        <div class="notify-field">
+          <label>Your Name / Contact</label>
+          <input type="text" id="notifySender" placeholder="Your name, phone, or email">
+        </div>
+        <div class="notify-field">
+          <label>Additional Message</label>
+          <textarea id="notifyMessage" rows="3" placeholder="Any special details or wishes..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary notify-submit"><i class="fas fa-paper-plane"></i> Notify Admin</button>
+      </form>
+      <div id="notifySuccess" class="notify-success" style="display:none;">
+        <i class="fas fa-check-circle"></i>
+        <p>Thank you! Admin has been notified about this birthday.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">🎉 BirthdayWishes</div>
+      <p>Made with <i class="fas fa-heart"></i> to celebrate life's beautiful moments</p>
+      <div class="footer-social">
+        <a href="https://wa.me/250795618744" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        <a href="https://www.instagram.com/__i.a.mtb/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="mailto:tuyishimireoscotb@gmail.com" title="Email"><i class="fas fa-envelope"></i></a>
+      </div>
+      <div class="footer-links">
+        <a href="#hero">Home</a>
+        <a href="#countdown">Countdown</a>
+        <a href="#card">Card</a>
+        <a href="#comments">Comments</a>
+        <a href="dashboard.html">Admin</a>
+      </div>
+      <p class="footer-copy">&copy; <span id="footerYear"></span> BirthdayWishes. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button id="backToTop" class="back-to-top" aria-label="Back to top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <!-- Expired Link Overlay -->
+  <div id="expiredOverlay" class="expired-overlay" style="display:none;">
+    <div class="expired-content">
+      <div class="expired-icon">⏰</div>
+      <h2>This Celebration Has Ended</h2>
+      <p>The birthday celebration link is no longer valid.</p>
+      <p class="expired-date" id="expiredDate"></p>
+      <p class="expired-message">Thank you for being part of this celebration!</p>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast">
+    <span id="toastMessage"></span>
+  </div>
+
+  <!-- Audio element (hidden) -->
+  <audio id="bgMusic" loop preload="auto">
+    <source src="assets/music/birthday.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Scripts -->
+  <script src="js/utils.js" defer></script>
+  <script src="js/firebase-config.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/animations.js" defer></script>
+  <script src="js/comments.js" defer></script>
+  <script src="js/countdown.js" defer></script>
+  <script src="js/themes.js" defer></script>
+  <script src="js/messages.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/notify.js" defer></script>
+</body>
+</html>
