@@ -68,9 +68,10 @@ const App = (() => {
       if (expiryStr) {
         const targetDate = new Date(expiryStr);
         if (!isNaN(targetDate.getTime())) {
-          const today = new Date();
-          today.setHours(23, 59, 59, 999);
-          if (targetDate < today) {
+          const now = new Date();
+          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const targetDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+          if (targetDay < todayStart) {
             const overlay = document.getElementById('expiredOverlay');
             const dateEl = document.getElementById('expiredDate');
             if (overlay) {
