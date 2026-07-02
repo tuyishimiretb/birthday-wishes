@@ -13,9 +13,10 @@ const Auth = (() => {
       currentUser = user;
       const ev = new CustomEvent('authChange', { detail: { user } });
       document.dispatchEvent(ev);
-    }, () => {
+    }, (err) => {
       fbAuth._isInvalid = true;
-      console.warn('Auth: Firebase Auth unavailable, using local fallback');
+      fbAuth._authError = err;
+      console.warn('Auth: Firebase Auth unavailable (' + (err.code || err.message) + '), using local fallback');
     });
   }
 
@@ -58,5 +59,8 @@ const Auth = (() => {
   function getUser() { return currentUser; }
   function isLoggedIn() { return !!currentUser; }
 
-  return { init, login, logout, getUser, isLoggedIn };
+  function isAuthInvalid() { return fbAuth && fbAuth._isInvalid; }
+  function getAuthError() { return fbAuth && fbAuth._authError ? fbAuth._authError.message || fbAuth._authError.code || 'unknown' : null; }
+
+  return { init, login, logout, getUser, isLoggedIn, isAuthInvalid, getAuthError };
 })();
