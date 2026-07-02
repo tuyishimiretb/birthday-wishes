@@ -12,12 +12,13 @@
 // =============================================
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDT_qeQ3d6e1eMTiQOXF4zsTiHrGIw2UCQ",
+  authDomain: "birthday-wishes-78d5e.firebaseapp.com",
+  projectId: "birthday-wishes-78d5e",
+  storageBucket: "birthday-wishes-78d5e.firebasestorage.app",
+  messagingSenderId: "32042794457",
+  appId: "1:32042794457:web:c8508758d3a16f93c06dc8",
+  measurementId: "G-GJ5774GN7S"
 };
 
 // Initialize Firebase
