@@ -455,9 +455,18 @@ const Dashboard = (() => {
 
   // --- Settings ---
   async function syncSettingToFirestore(key, value) {
-    if (!fbFirestore) return;
+    if (fbFirestore) {
+      try {
+        await fbFirestore.collection('settings').doc('global').set({ [key]: value }, { merge: true });
+      } catch {}
+    }
     try {
-      await fbFirestore.collection('settings').doc('global').set({ [key]: value }, { merge: true });
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value })
+      });
+      if (!res.ok) throw new Error();
     } catch {}
   }
 

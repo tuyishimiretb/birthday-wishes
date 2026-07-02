@@ -92,20 +92,28 @@ const App = (() => {
   }
 
   async function loadSettingsFromFirestore() {
-    if (!fbFirestore) return;
-    try {
-      const doc = await fbFirestore.collection('settings').doc('global').get();
-      if (doc.exists) {
-        const data = doc.data();
-        const settingKeys = ['bw_birthday_name', 'bw_birthday_date', 'bw_card_emoji', 'bw_card_message',
-          'bw_card_style', 'bw_theme', 'bw_admin_email', 'bw_link_expiry', 'bw_music_url'];
-        settingKeys.forEach(key => {
-          if (data[key]) {
-            try { localStorage.setItem(key, data[key]); } catch {}
-          }
-        });
-      }
-    } catch {}
+    let data = null;
+    if (fbFirestore) {
+      try {
+        const doc = await fbFirestore.collection('settings').doc('global').get();
+        if (doc.exists) data = doc.data();
+      } catch {}
+    }
+    if (!data) {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) data = await res.json();
+      } catch {}
+    }
+    if (data) {
+      const settingKeys = ['bw_birthday_name', 'bw_birthday_date', 'bw_card_emoji', 'bw_card_message',
+        'bw_card_style', 'bw_theme', 'bw_admin_email', 'bw_link_expiry', 'bw_music_url'];
+      settingKeys.forEach(key => {
+        if (data[key]) {
+          try { localStorage.setItem(key, data[key]); } catch {}
+        }
+      });
+    }
   }
 
   // --- Music Controls ---
